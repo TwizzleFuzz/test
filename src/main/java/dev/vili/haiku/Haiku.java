@@ -12,11 +12,17 @@ import dev.vili.haiku.config.ConfigManager;
 import dev.vili.haiku.eventbus.EventBus;
 import dev.vili.haiku.module.ModuleManager;
 import dev.vili.haiku.setting.SettingManager;
+import dev.vili.haiku.ui.HaikuScreen;
 import dev.vili.haiku.util.HaikuLogger;
 import dev.vili.haiku.util.TPSUtil;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.util.InputUtil;
+import org.lwjgl.glfw.GLFW;
 
 /**
  * Main class for haiku.
@@ -31,6 +37,8 @@ public class Haiku implements ModInitializer {
     private final CommandManager COMMAND_MANAGER = new CommandManager();
     private final SettingManager SETTING_MANAGER = new SettingManager();
     private final ConfigManager CONFIG_MANAGER = new ConfigManager();
+
+    private static KeyBinding openGuiKeybind;
 
     public Haiku() {
         INSTANCE = this;
@@ -49,6 +57,20 @@ public class Haiku implements ModInitializer {
     @Override
     public void onInitialize() {
         HaikuLogger.logger.info(MOD_NAME + " v" + MOD_VERSION + " (phase 1) has initialized!");
+
+        openGuiKeybind = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+                "key.haiku.open_gui",
+                InputUtil.Type.KEYSYM,
+                GLFW.GLFW_KEY_RIGHT_SHIFT,
+                "category.haiku"
+        ));
+
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (openGuiKeybind.wasPressed()) {
+                client.setScreen(HaikuScreen.getInstance());
+            }
+        });
+
         CONFIG_MANAGER.load();
         HaikuLogger.logger.info("Loaded config!");
 
@@ -69,6 +91,7 @@ public class Haiku implements ModInitializer {
         HaikuLogger.logger.info("Registered TickRateUtil!");
         HaikuLogger.logger.info(MOD_NAME + " v" + MOD_VERSION + " (phase 2) has initialized!");
     }
+
 
     /**
      * Gets the event bus.
